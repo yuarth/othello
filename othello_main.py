@@ -23,15 +23,21 @@ while(turn < 60):
         y = int(input())
 
     #石を置く
-    if board1.board_check(x, y, player):
-        board1.put_stone(x, y, player)
+    if board1.board_check(x, y):
+        board1.reverse_stone(x, y)
+        print("ok")
         
     else:
-        print("www")
+        print("ng")
+
+    board1.bit_to_array()
 
     #盤面の描画
-    od.draw(board1.board)
+    od.draw(board1.board, player)
 
     #手番交代
     player = player * -1
+    tmp = board1.player_board
+    board1.player_board = board1.opponent_board
+    board1.opponent_board = tmp
     turn = turn + 1
