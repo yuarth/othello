@@ -1,34 +1,33 @@
 import numpy as np
+from numpy.lib.function_base import blackman
 
 
-#０：なし、１：黒、−１：白
+#０：候補、１：黒、−１：白、nan：なし
 class othello_board:
     board = np.zeros((8,8))
     player_board = 0x0000_0008_1000_0000
     opponent_board = 0x0000_0010_0800_0000
+    legal_board = 0x0000_0000_0000_0000
+    player = 1
+    black = 2
+    white = 2
 
     def __init__(self):    
         self.board[:,:] = np.nan
-        self.board[3, 3] = -1
-        self.board[3, 4] = 1
-        self.board[4, 3] = 1
-        self.board[4, 4] = -1
+        self.bit_to_array()
 
     def bit_to_array(self):
         tmp = 0x8000_0000_0000_0000
         for i in range(8):
             for j in range(8):
                 if (tmp & self.player_board) > 0:
-                    self.board[i, j] = 1
+                    self.board[i][j] = self.player
                 elif (tmp & self.opponent_board) > 0:
-                    self.board[i, j] = -1
+                    self.board[i][j] = self.player * -1
                 tmp = tmp >> 1
 
-    def reverse_stone(self, x, y):
+    def reverse_stone(self, put):
         reverse_board = 0x0000_0000_0000_0000
-        put = 0x8000_0000_0000_0000
-        put = put >> x
-        put = put >> (y * 8)
 
         for i in range(8):
             rev = 0x0000_0000_0000_0000
@@ -73,67 +72,104 @@ class othello_board:
         else:
             return 0
 
-    
+    def count_stone(self):
+        self.black = np.count_nonzero(self.board == 1)
+        self.white = np.count_nonzero(self.board == -1)
 
-    def board_check(self, x, y):
+    def board_check(self):
         #条件の調査
-        put = 0x8000_0000_0000_0000
-        put = put >> x
-        put = put >> (y * 8)
-        horizontal_watch_board = 0x7e7e_7e7e_7e7e_7e7e
-        vertical_watch_board = 0x00FF_FFFF_FFFF_FF00
-        allside_watch_board = 0x007e_7e7e_7e7e_7e00
+
+        horizontal_watch_board = self.opponent_board & 0x7e7e_7e7e_7e7e_7e7e
+        vertical_watch_board = self.opponent_board & 0x00FF_FFFF_FFFF_FF00
+        allside_watch_board = self.opponent_board & 0x007e_7e7e_7e7e_7e00
 
         blank_board = ~(self.player_board | self.opponent_board)
-        
-        legal_board = blank_board
+   
         #左
         tmp = horizontal_watch_board & (self.player_board << 1) 
+        
         for i in range(5):
             tmp |= horizontal_watch_board & (tmp << 1)
-        legal_board = legal_board & (tmp << 1)
+            
+        self.legal_board = blank_board & (tmp << 1)
 
         #右
         tmp = horizontal_watch_board & (self.player_board >> 1) 
         for i in range(5):
             tmp |= horizontal_watch_board & (tmp >> 1)
-        legal_board = legal_board & (tmp >> 1)
+
+        self.legal_board |= blank_board & (tmp >> 1)
 
         #上
         tmp = vertical_watch_board & (self.player_board << 8)
         for i in range(5):
             tmp |= vertical_watch_board & (tmp << 8)
-        legal_board |= blank_board & (tmp << 8)
+
+        self.legal_board |= blank_board & (tmp << 8)
 
         #下
         tmp = vertical_watch_board & (self.player_board >> 8)
         for i in range(5):
             tmp |= vertical_watch_board & (tmp >> 8)
-        legal_board |= blank_board & (tmp >> 8)
+
+        self.legal_board |= blank_board & (tmp >> 8)
 
         #左上
         tmp = allside_watch_board & (self.player_board << 9)
         for i in range(5):
             tmp |= allside_watch_board & (tmp << 9)
-        legal_board |= blank_board & (tmp << 9)
+
+        self.legal_board |= blank_board & (tmp << 9)
 
         #右下
         tmp = allside_watch_board & (self.player_board >> 9)
         for i in range(5):
             tmp |= allside_watch_board & (tmp >> 9)
-        legal_board |= blank_board & (tmp >> 9)        
+
+        self.legal_board |= blank_board & (tmp >> 9)        
 
         #右上
         tmp = allside_watch_board & (self.player_board << 7)
         for i in range(5):
             tmp |= allside_watch_board & (tmp << 7)
-        legal_board |= blank_board & (tmp << 7)
+
+        self.legal_board |= blank_board & (tmp << 7)
 
         #左下
         tmp = allside_watch_board & (self.player_board >> 7)
         for i in range(5):
             tmp |= allside_watch_board & (tmp >> 7)
-        legal_board |= blank_board & (tmp >> 7)    
 
+        self.legal_board |= blank_board & (tmp >> 7)  
 
-        return (put & legal_board) == put
+        self.board = np.where(self.board == 0, np.nan, self.board)
+        tmp = 0x8000_0000_0000_0000
+        for i in range(8):
+            for j in range(8):
+                if (tmp & self.legal_board) > 0:
+                    self.board[i][j] = 0
+                tmp = tmp >> 1  
+
+        return self.legal_board
+
+    def coordinate_to_bit(self, x, y):
+        put = 0x8000_0000_0000_0000
+        put = put >> x
+        put = put >> (y * 8)
+        return put
+
+    def is_pass(self):
+        print(self.legal_board)
+        return (self.legal_board == 0x0000_0000_0000_0000)
+
+def testprint(bit):
+        #おける場所の表示
+        tmp = 0x8000_0000_0000_0000
+        tmp_array = np.zeros((8,8))
+        for i in range(8):
+            for j in range(8):
+                if (tmp & bit) > 0:
+                    tmp_array[i][j] = 1
+                
+                tmp = tmp >> 1
+        print(tmp_array)
