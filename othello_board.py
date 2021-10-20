@@ -11,12 +11,31 @@ class othello_board:
     player = 1
     black = 2
     white = 2
+    turn = 0
+    evaluate_board = np.zeros((8, 8))
 
     def __init__(self):    
         self.board[:,:] = np.nan
-        self.bit_to_array()
+        self.player_board = 0x0000_0008_1000_0000
+        self.opponent_board = 0x0000_0010_0800_0000
+        self.legal_board = 0x0000_0000_0000_0000
+        self.bit_to_board()
+        self.player = 1
+        self.black = 2
+        self.white = 2
+        self.turn = 0
+        self.evaluate_board = [
+            [15, 0, 10, 0, 0, 10, 0, 15],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [10, 0, 10, 0, 0, 10, 0, 10],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [10, 0, 10, 0, 0, 10, 0, 10],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [15, 0, 10, 0, 0, 10, 0, 15]
+        ]
 
-    def bit_to_array(self):
+    def bit_to_board(self):
         tmp = 0x8000_0000_0000_0000
         for i in range(8):
             for j in range(8):
@@ -25,6 +44,7 @@ class othello_board:
                 elif (tmp & self.opponent_board) > 0:
                     self.board[i][j] = self.player * -1
                 tmp = tmp >> 1
+
 
     def reverse_stone(self, put):
         reverse_board = 0x0000_0000_0000_0000
@@ -158,9 +178,23 @@ class othello_board:
         put = put >> (y * 8)
         return put
 
+    def return_candidate(self):
+        l = self.board_check()
+        tmp = 0x8000_0000_0000_0000
+        a = np.zeros((8,8))
+        for i in range(8):
+            for j in range(8):
+                if (tmp & l) > 0:
+                    a[j][i] = 1
+                tmp = tmp >> 1
+        return a
+
+
     def is_pass(self):
-        print(self.legal_board)
         return (self.legal_board == 0x0000_0000_0000_0000)
+
+    
+
 
 def testprint(bit):
         #おける場所の表示

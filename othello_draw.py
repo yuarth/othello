@@ -4,9 +4,8 @@ import pygame as pg
 import sys
 import othello_main as om
 import othello_board as ob
-
-def draw(array, player):
-    #array = array * player
+import othello_ai as oa
+def draw(array):
     print(array)
 
 def window():
@@ -36,7 +35,8 @@ def window():
 
     #オセロボードのインスタンス
     board = ob.othello_board()
-    board.board_check()
+    board.return_candidate()
+
     text3 = font1.render(str(board.white), True, (0,0,0))
     text4 = font1.render(str(board.black), True, (0,0,0))
     screen.blit(text3, (110,10))
@@ -45,9 +45,9 @@ def window():
     for i in range(8):
         for j in range(8):
             if(board.board[i][j] == -1):
-                pg.draw.circle(screen, (255, 255, 255), (i * 80 + 60, j * 80 + 120), 40, width = 0)
+                pg.draw.circle(screen, (255, 255, 255), (i * 80 + 60, j * 80 + 120), 35, width = 0)
             elif(board.board[i][j] == 1):
-                pg.draw.circle(screen, (0, 0, 0), (i * 80 + 60, j * 80 + 120), 40, width = 0)
+                pg.draw.circle(screen, (0, 0, 0), (i * 80 + 60, j * 80 + 120), 35, width = 0)
             elif(board.board[i][j] == 0):
                 pg.draw.circle(screen, (10, 10, 10), (j * 80 + 60, i * 80 + 120), 10, width = 0)
 
@@ -77,7 +77,10 @@ def window():
                 
                 #ゲームの実行
                 flag = om.game(board, x, y)
-                
+                x, y = oa.ai_put(board)
+                flag = om.game(board, x, y)
+                print(board.board)
+
                 #石の数の表示
                 text3 = font1.render(str(board.white), True, (0,0,0))
                 text4 = font1.render(str(board.black), True, (0,0,0))
@@ -94,11 +97,14 @@ def window():
                             pg.draw.circle(screen, (0, 0, 0), (j * 80 + 60, i * 80 + 120), 40, width = 0)
                         elif(board.board[i][j] == 0):
                             pg.draw.circle(screen, (10, 10, 10), (j * 80 + 60, i * 80 + 120), 10, width = 0)
+                
+                
+        
+        pg.display.update()
+        
+        
 
-        pg.display.update()	
-        if(flag):
-            print("")
-        else:
+        if(not flag):
             while(1):
                 for event in pg.event.get():	
                     if event.type == pg.QUIT:		

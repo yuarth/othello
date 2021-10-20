@@ -31,7 +31,7 @@ def main():
         else:
             print("ng")
 
-        board1.bit_to_array()
+        board1.bit_to_board()
 
         #盤面の描画
         od.draw(board1.board, board1.player)
@@ -48,12 +48,13 @@ def game(board, x, y):
     #石を置く
     put = board.coordinate_to_bit(x, y)
     if not ((board.board_check() & put) == put):
-        print("ng")    
+        #print("ng")    
         return True
     else:
+        #print("ok")
         board.reverse_stone(put)
-        board.bit_to_array()
-    
+        board.bit_to_board()
+        board.turn = board.turn + 1
         #手番交代
         tmp = board.player_board
         board.player_board = board.opponent_board
@@ -63,13 +64,14 @@ def game(board, x, y):
         board.count_stone()
         board.board_check()
         if(board.is_pass()):
-            print("pass")
+            #print("pass")
             tmp = board.player_board
             board.player_board = board.opponent_board
             board.opponent_board = tmp
             board.player = board.player * -1
             board.board_check()
             if(board.is_pass()):
+                #print("game end")
                 return False
         return True
     
