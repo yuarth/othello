@@ -76,10 +76,12 @@ def window():
                 y = int((y - 80) / 80)
                 
                 #ゲームの実行
-                flag = om.game(board, x, y)
-                x, y = oa.ai_put(board)
-                flag = om.game(board, x, y)
-                print(board.board)
+                if(board.player == 1):
+                    flag = om.game(board, x, y)
+                    x, y = oa.ai_put(board)
+                if(board.player == -1):
+                    flag = om.game(board, x, y)
+                    print(board.board)
 
                 #石の数の表示
                 text3 = font1.render(str(board.white), True, (0,0,0))

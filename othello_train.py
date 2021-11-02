@@ -14,8 +14,10 @@ for i in range(auto_games):
     flag = True
     while flag:    
         #置く位置の取得
-        #x, y = oa.ai_random(board)
-        x, y = oa.ai_put(board)
+        if board.player == 1:
+            x, y = oa.ai_random(board)
+        else:
+            x, y = oa.ai_put(board)
         print(board.turn)
         flag = om.game(board, x, y)
     #結果の保存

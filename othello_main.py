@@ -64,7 +64,7 @@ def game(board, x, y):
         board.count_stone()
         board.board_check()
         if(board.is_pass()):
-            #print("pass")
+            print("pass")
             tmp = board.player_board
             board.player_board = board.opponent_board
             board.opponent_board = tmp
