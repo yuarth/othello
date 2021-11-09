@@ -1,5 +1,7 @@
 # othello
-
+## 動作環境
+python3
+$python othello_draw.pyでゲームの開始
 ## othello_main.py
 オセロのゲームを進行するためのプログラム
 ## othello_board.py
