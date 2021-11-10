@@ -20,15 +20,15 @@ def ai_put(board):
     x_candidate_list, y_candidate_list = index
 
     #alpha-beta法で得られた一番評価値が高いものを選択
-    depth = 2
+    depth = 4
     if(board.turn >= 60 - depth):
         depth = 60 - board.turn
 
 
     predict_board = ob.othello_board()
     index = 0
-    #for i in range(len(x_candidate_list)):
-    for i in range(2):
+    for i in range(len(x_candidate_list)):
+    #for i in range(2):
         #盤面の複製
         predict_board.board = board.board
         predict_board.player_board = board.player_board
@@ -91,7 +91,7 @@ def alphabeta(alpha, beta, depth, board):
     #depth = even:相手番, odd:自番
     if depth == 0:
         e = ai_evaluate(board)
-        print("evaluate", e, predict_board.player, depth)
+        #print("evaluate", e, predict_board.player, depth)
         return e
 
     c = board.return_candidate()
@@ -109,7 +109,7 @@ def alphabeta(alpha, beta, depth, board):
             predict_board.player = board.player
             om.game(predict_board, int(column_list[i]), int(row_list[i]))
             tmp = alphabeta(alpha, beta, depth-1, predict_board)
-            print("alpha", tmp, predict_board.player, depth)
+            #print("alpha", tmp, predict_board.player, depth)
             if tmp >= alpha:
                 alpha = tmp
         return alpha
@@ -124,9 +124,9 @@ def alphabeta(alpha, beta, depth, board):
             predict_board.legal_board = board.legal_board
             om.game(predict_board, int(column_list[i]), int(row_list[i]))
             tmp = alphabeta(alpha, beta, depth-1, predict_board)
-            print("********")
-            print("beta", tmp, predict_board.player, depth)
-            print("********")
+            #print("********")
+            #print("beta", tmp, predict_board.player, depth)
+            #print("********")
             if tmp <= beta:
                 
                 beta = tmp
