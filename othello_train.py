@@ -22,7 +22,7 @@ def main():
     for i in range(auto_games):
         board = ob.othello_board()
         flag = True
-
+        game_record = {}
         #ゲームの開始
         while flag:    
             #db記録用
@@ -30,7 +30,7 @@ def main():
             weight_list = []
             input_data = []
             #棋譜
-            game_record = {}
+            
 
             #置く位置の取得
             if board.player == 1:
@@ -60,10 +60,15 @@ def main():
             input_data.append(weight_list)
 
             id = db_insert(input_data)
-            game_record[id] = str(x) + str(y)
-
-        db_update(game_record)
+            game_record[str(x) + str(y)] = id
+            
         print("black", board.black, "white", board.white)
+        if board.black > board.white:
+            winner = 1
+        else:
+            winner = -1
+        db_update(game_record, winner)
+        
 
     elapsed_time = time.time() - start
     print("elapsed_time:{0}".format(elapsed_time) + "[sec]")
@@ -74,7 +79,7 @@ def db_insert(insert_data):
     try:
         cur.execute("""
         create table IF NOT EXISTS OTHELLOBOARD (
-            ID integer primary key autoincrement,
+            ID integer primary key,
             BOARDBLACK varchar(256),
             BOARDWHITE varchar(256),
             CANDIDATE LIST,
@@ -87,9 +92,9 @@ def db_insert(insert_data):
         if not rows:				# リストが空のとき
             cur.execute('INSERT INTO OTHELLOBOARD (BOARDBLACK, BOARDWHITE, CANDIDATE, WEIGHT) VALUES(?, ?, ?, ?)', insert_data)
 
-        cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1]))
-        rows = cur.fetchall()
-        return rows[0]
+        for row in cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1])):
+            id = row[0]
+        return id
 
     except sqlite3.Error as e:		# エラー処理
         print("Error occurred:", e.args[0])
@@ -105,19 +110,37 @@ def db_read():
 
 
 
-def db_update(game_record):
-    for key, value in game_record:
-        cur.execute('SELECT * FROM OTHELLOBOARD WHERE ID = ?', )
-        rows = cur.fetchall()		# 検索結果をリストとして取得
-        candidate = rows[3]
-        weight = rows[4]
-        tmp_dict = dict(zip(candidate, weight))
+def db_update(game_record, winner):
+    
+    count = 1
+    candidate = []
+    weight = []
+    values = list(game_record.keys())
+    keys = list(game_record.values())
+    count = 1
+    for i in keys:
+        
+        for row in cur.execute("SELECT * FROM OTHELLOBOARD WHERE ID = ?", i):
+            print(row)
+            tmp = 0
+            for item in row:
+                if(tmp == 3):
+                    candidate = item
+                if(tmp == 4):
+                    weight = item
+                tmp = tmp + 1
+            tmp_dict = dict(zip(candidate, weight))
 
+        if count % 2 == 1:
+            tmp_dict[values[count]] = int(tmp_dict[values[count]]) + count * winner
+        else:
+            tmp_dict[values[count]] = int(tmp_dict[values[count]]) - count * winner
+        weight = list(tmp_dict.values())
         try:
-            cur.execute('UPDATE OTHELLOBOARD SET WEIGHT = ? WHERE ID = ?', (weight, id))
+            cur.execute('UPDATE OTHELLOBOARD SET WEIGHT = ? WHERE ID = ?', (weight, str(i)))
         except sqlite3.Error as e:		# エラー処理
             print("Error occurred:", e.args[0])
-
+        count = count + 1
 
 if __name__	== "__main__":
     main()
