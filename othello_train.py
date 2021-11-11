@@ -9,11 +9,12 @@ import numpy as np
 start = time.time()
 
 #試合数
-auto_games = 1
+auto_games = 10000000000
 
 #db接続
 sqlite3.register_adapter(list, lambda l: ';'.join([str(i) for i in l]))
 sqlite3.register_converter('LIST', lambda s: [item.decode('utf-8')  for item in s.split(bytes(b';'))])
+
 db_path = "othellodb.db"			# データベースファイル名を指定
 con = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)	# データベースに接続
 cur = con.cursor()	
@@ -87,12 +88,12 @@ def db_insert(insert_data):
             );
             """)
 
-        cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1]))
+        cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1],))
         rows = cur.fetchall()		# 検索結果をリストとして取得
-        if not rows:				# リストが空のとき
+        if not rows:
             cur.execute('INSERT INTO OTHELLOBOARD (BOARDBLACK, BOARDWHITE, CANDIDATE, WEIGHT) VALUES(?, ?, ?, ?)', insert_data)
 
-        for row in cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1])):
+        for row in cur.execute('SELECT * FROM OTHELLOBOARD WHERE BOARDBLACK = ? and BOARDWHITE = ?', (insert_data[0], insert_data[1],)):
             id = row[0]
         return id
 
@@ -103,11 +104,14 @@ def db_insert(insert_data):
 
 
 def db_read():
+    db_path = "othellodb.db"			# データベースファイル名を指定
+    con = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)	# データベースに接続
+    cur = con.cursor()	
     for row in cur.execute('SELECT * FROM OTHELLOBOARD'):
         print(row)
-        for item in row:
-            print(f'{str(type(item)):15}:{item}')
-
+        #for item in row:
+            #print(f'{str(type(item)):15}:{item}')
+    con.close()	
 
 
 def db_update(game_record, winner):
@@ -119,29 +123,44 @@ def db_update(game_record, winner):
     keys = list(game_record.values())
     count = 1
     for i in keys:
-        
-        for row in cur.execute("SELECT * FROM OTHELLOBOARD WHERE ID = ?", i):
-            print(row)
+        id = str(i)
+        for row in cur.execute('SELECT * FROM OTHELLOBOARD WHERE ID = ?', (id,)):
+            #print(row)
             tmp = 0
-            for item in row:
+            for item in row:                    
                 if(tmp == 3):
+                    if(item == None):
+                        tmp_dict = None
+                        break
+                    if len(item[0]) == 1:
+                        item = ['0' + item[0]]
                     candidate = item
                 if(tmp == 4):
                     weight = item
                 tmp = tmp + 1
-            tmp_dict = dict(zip(candidate, weight))
-
-        if count % 2 == 1:
-            tmp_dict[values[count]] = int(tmp_dict[values[count]]) + count * winner
-        else:
-            tmp_dict[values[count]] = int(tmp_dict[values[count]]) - count * winner
-        weight = list(tmp_dict.values())
+            
+            else:
+                tmp_dict = dict(zip(candidate, weight))
+        if len(keys) - count == 0:
+            break
+        if tmp_dict != None:
+            try:
+                if count % 2 == 1:
+                    tmp_dict[values[count]] = str(int(tmp_dict[values[count]]) + count * winner)
+                else:
+                    tmp_dict[values[count]] = str(int(tmp_dict[values[count]]) - count * winner)
+                weight = list(tmp_dict.values())
+            except:
+                print(tmp_dict)
+                print(values[count])
+                print(count)
         try:
-            cur.execute('UPDATE OTHELLOBOARD SET WEIGHT = ? WHERE ID = ?', (weight, str(i)))
+            cur.execute('UPDATE OTHELLOBOARD SET WEIGHT = ? WHERE ID = ?', (weight, id,))
         except sqlite3.Error as e:		# エラー処理
             print("Error occurred:", e.args[0])
         count = count + 1
+        con.commit()
 
 if __name__	== "__main__":
     main()
-    
+    db_read()
