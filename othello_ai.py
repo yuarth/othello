@@ -1,4 +1,5 @@
 #AIの打ち筋
+from math import inf
 import random
 import numpy as np
 import othello_board as ob
@@ -85,20 +86,20 @@ def ai_evaluate(board):
     return score
 
 #alpha-beta法
-def alphabeta(alpha, beta, depth, board):
+def alphabeta(board, alpha=inf, beta=-inf, depth=5):
     predict_board = ob.othello_board()
     
     #depth = even:相手番, odd:自番
     if depth == 0:
         e = ai_evaluate(board)
-        #print("evaluate", e, predict_board.player, depth)
+        print("evaluate:", e, "player:",predict_board.player, "depth",depth)
         return e
-
     c = board.return_candidate()
     column_list, row_list = np.where(c > 0)
     
     #最大値(自番)
-    if (depth % 2) == 1:
+    if board.player == 1:
+        max = -inf
         if(len(column_list) == 0):
             return 100
         for i in range(len(column_list)):
@@ -108,13 +109,19 @@ def alphabeta(alpha, beta, depth, board):
             predict_board.legal_board = board.legal_board
             predict_board.player = board.player
             om.game(predict_board, int(column_list[i]), int(row_list[i]))
-            tmp = alphabeta(alpha, beta, depth-1, predict_board)
-            #print("alpha", tmp, predict_board.player, depth)
-            if tmp >= alpha:
-                alpha = tmp
+            tmp = alphabeta(predict_board, alpha, beta, depth-1)
+            #print("alpha", tmp, "player:",predict_board.player, "depth",depth)
+            print("alpha",alpha, "beta", beta)
+            if tmp >= max:
+                max = tmp
+                alpha = max
+            if alpha <= beta:
+                print("break")
+                break
         return alpha
     #最小値(相手番)
     else:
+        min = inf
         if(len(column_list) == 0):
             return -100
         for i in range(len(column_list)):
@@ -122,17 +129,22 @@ def alphabeta(alpha, beta, depth, board):
             predict_board.player_board = board.player_board
             predict_board.opponent_board = board.opponent_board
             predict_board.legal_board = board.legal_board
+            predict_board.player = board.player
             om.game(predict_board, int(column_list[i]), int(row_list[i]))
-            tmp = alphabeta(alpha, beta, depth-1, predict_board)
-            #print("********")
-            #print("beta", tmp, predict_board.player, depth)
-            #print("********")
-            if tmp <= beta:
-                
-                beta = tmp
+            tmp = alphabeta(predict_board, alpha, beta, depth-1)
+            print("beta",beta, "alpha", alpha)
+            #print("beta", tmp, "player:",predict_board.player, "depth",depth)
+            if tmp <= min:
+                min = tmp
+                beta = min
+            if alpha <= beta:
+                print("break")
+                break
         return beta
 
 
 if __name__	== "__main__":
     board = ob.othello_board()
-    print(ai_put(board))
+    score = alphabeta(board)
+    print("score", score)
+    #print(ai_put(board))

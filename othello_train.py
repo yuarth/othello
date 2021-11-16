@@ -59,8 +59,8 @@ def main():
             #結果の保存
             input_data.append(candidate_list)
             input_data.append(weight_list)
-
-            id = db_insert(input_data)
+            if flag:
+                id = db_insert(input_data)
             game_record[str(x) + str(y)] = id
             
         print("black", board.black, "white", board.white)
